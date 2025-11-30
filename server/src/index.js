@@ -21,13 +21,3 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });
-
-// Cek apakah sedang berjalan di Vercel
-if (process.env.VERCEL) {
-    module.exports = app;
-} else {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Server berjalan di http://localhost:${PORT}`);
-    });
-}
