@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Award, User, Users, Search, Loader, Trash2, Info, HandHeart, BookOpen, 
-  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Share2, Mail, Globe, Github, Heart, Briefcase
+  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut
 } from 'lucide-react';
+import Login from './Login'; // Pastikan file Login.jsx ada di folder yang sama
 
 // --- 1. KOMPONEN UI DASAR ---
 
@@ -12,7 +13,8 @@ const Button = ({ children, onClick, variant = 'primary', className = '', fullWi
     primary: "bg-yellow-400 text-blue-900 hover:bg-yellow-300 shadow-md border border-transparent", 
     secondary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm", 
     outline: "bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-50",
-    ghost: "bg-transparent text-gray-500 hover:bg-gray-100"
+    ghost: "bg-transparent text-gray-500 hover:bg-gray-100",
+    danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
   };
   return (
     <button type={type} onClick={onClick} className={`${baseStyle} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}>
@@ -77,9 +79,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 
 // --- 2. HALAMAN-HALAMAN ---
 
-const Home = ({ setActiveTab, events }) => {
-  // [FIX] Tambahkan pengecekan Array.isArray sebelum slice
-  // Jika events null/object/undefined, gunakan array kosong agar tidak error "slice is not function"
+const Home = ({ setActiveTab, events, user }) => {
   const safeEvents = Array.isArray(events) ? events : [];
   const featuredEvents = safeEvents.slice(0, 3);
   
@@ -87,7 +87,7 @@ const Home = ({ setActiveTab, events }) => {
     <div className="pb-24 animate-fade-in">
       <div className="bg-blue-600 text-white rounded-b-[2.5rem] shadow-xl p-6 pt-10 md:p-12 relative overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-2">Pejuang Karir 👋</h1>
+          <h1 className="text-2xl font-bold mb-2">Halo, {user?.name || 'Pejuang Karir'} 👋</h1>
           <h2 className="text-3xl font-bold mb-6">Masa Depan <span className="text-yellow-400">Dimulai Disini.</span></h2>
           <div className="bg-white/10 p-2 rounded-xl flex items-center border border-white/20"><Search className="text-blue-200 ml-2" size={18}/><input type="text" placeholder="Cari Bootcamp..." className="bg-transparent border-none text-white placeholder-blue-200 text-sm w-full p-2 focus:outline-none" onClick={() => setActiveTab('events')} /></div>
         </div>
@@ -199,13 +199,24 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // State untuk User Auth
+  const [user, setUser] = useState(null);
+
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+  // Efek untuk cek login saat aplikasi dibuka
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Efek untuk fetch data events
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        // Mengambil data dari Backend
         const response = await fetch(`${API_URL}/api/events`);
         
         if (!response.ok) {
@@ -214,15 +225,13 @@ export default function App() {
 
         const result = await response.json();
         
-        // [FIX] Perbaikan Logika Pengambilan Data
-        // Backend kamu mengirim: { success: true, data: [...] }
         if (result.success && Array.isArray(result.data)) {
-           setEvents(result.data); // Ambil array di dalam properti .data
+           setEvents(result.data); 
         } else if (Array.isArray(result)) {
-           setEvents(result); // Fallback jika backend mengirim array langsung
+           setEvents(result); 
         } else {
            console.error("Format data tidak dikenali:", result);
-           setEvents([]); // Set kosong agar tidak error
+           setEvents([]); 
         }
 
       } catch (error) {
@@ -245,6 +254,16 @@ export default function App() {
   const confirmUnregister = () => {
     setMyRegistrations(myRegistrations.filter(r => r.id !== idToCancel));
     setIsModalOpen(false);
+  };
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
   };
 
   const goToAbout = () => {
@@ -279,12 +298,15 @@ export default function App() {
     </button>
   );
 
-  // --- RENDER ---
-  
+  // --- LOGIKA UTAMA ---
+  // Jika user belum login, tampilkan halaman Login
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   if (selectedEvent) return <EventDetail event={selectedEvent} onBack={goBack} onRegister={handleRegister} isRegistered={myRegistrations.some(r => r.id === selectedEvent.id)} />;
   if (showAbout) return <About onBack={goBack} />;
 
-  // [FIX] Pastikan events selalu array sebelum difilter
   const safeEventsList = Array.isArray(events) ? events : [];
 
   return (
@@ -299,16 +321,20 @@ export default function App() {
             <button key={tab} onClick={() => setActiveTab(tab)} className={`text-sm font-bold capitalize ${activeTab === tab ? 'text-blue-600' : 'text-gray-500'}`}>{tab.replace('-', ' ')}</button>
           ))}
         </div>
-        <button onClick={goToAbout} className="text-gray-500 flex items-center gap-1 text-sm"><Info size={16}/> Tentang</button>
+        <div className="flex items-center gap-4">
+            <button onClick={goToAbout} className="text-gray-500 flex items-center gap-1 text-sm"><Info size={16}/> Tentang</button>
+            <button onClick={handleLogout} className="text-red-600 flex items-center gap-1 text-sm font-bold bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100"><LogOut size={16}/> Keluar</button>
+        </div>
       </div>
       
       <div className="md:hidden bg-white px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
         <h1 className="font-bold text-blue-900 text-lg">BinaKarier</h1>
+        <button onClick={handleLogout} className="text-red-500"><LogOut size={20}/></button>
       </div>
 
       {/* Main Content */}
       <main className="md:max-w-7xl md:mx-auto md:px-8 md:py-6 min-h-screen">
-        {activeTab === 'home' && <Home setActiveTab={setActiveTab} events={events} />}
+        {activeTab === 'home' && <Home setActiveTab={setActiveTab} events={events} user={user} />}
         
         {activeTab === 'events' && (
           <div className="p-6 md:p-0 animate-fade-in">
@@ -333,7 +359,21 @@ export default function App() {
 
         {activeTab === 'dashboard' && (
           <div className="p-6 md:p-0 animate-fade-in">
-            <h2 className="text-2xl font-bold text-blue-900 mb-6">Akun Saya</h2>
+            <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-bold text-blue-900">Akun Saya</h2>
+                 <button onClick={handleLogout} className="md:hidden text-red-600 font-bold text-sm">Logout</button>
+            </div>
+            
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex items-center gap-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div>
+                    <h3 className="font-bold text-lg text-gray-900">{user?.name}</h3>
+                    <p className="text-gray-500 text-sm">{user?.email}</p>
+                </div>
+            </div>
+
             <div className="bg-blue-600 p-6 rounded-xl text-white shadow-lg mb-8"><div className="text-4xl font-bold mb-1">{myRegistrations.length}</div><div className="text-blue-100 text-sm">Event Diikuti</div></div>
             <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Event Terdaftar</h3>
             <div className="space-y-3 pb-24">
