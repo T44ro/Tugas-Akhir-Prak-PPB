@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import eventRoutes from './routes/eventRoutes.js';
+import eventRoutes from './src/routes/eventRoutes.js';
 
 dotenv.config();
 
