@@ -187,15 +187,42 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [idToCancel, setIdToCancel] = useState(null);
 
-  // Simulasi Loading Data
+  // State untuk data dan loading
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Tentukan URL API (Gunakan Environment Variable agar fleksibel saat deploy)
+  // Jika lokal: http://localhost:3000
+  // Jika deploy (Vercel): https://nama-proyek-mu.vercel.app
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
   useEffect(() => {
-    setTimeout(() => {
-      setEvents(MOCK_EVENTS);
-      setLoading(false);
-    }, 1000);
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        // Mengambil data dari Backend
+        const response = await fetch(`${API_URL}/api/events`);
+        
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data');
+        }
+
+        const data = await response.json();
+        
+        // Pastikan struktur data sesuai. 
+        // Jika backend mengirim { data: [...] }, gunakan data.data
+        // Jika backend mengirim array langsung [...], gunakan data
+        setEvents(data); 
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        // Fallback ke mock data jika API gagal (opsional)
+        setEvents(MOCK_EVENTS); 
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
   }, []);
 
   const handleRegister = (event) => {
