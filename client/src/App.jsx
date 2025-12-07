@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Award, User, Users, Search, Loader, Trash2, Info, HandHeart, BookOpen, 
-  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut
+  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink
 } from 'lucide-react';
 import Login from './Login'; // Pastikan file Login.jsx ada di folder yang sama
 
@@ -111,8 +111,25 @@ const Home = ({ setActiveTab, events, user }) => {
   );
 };
 
+// [UPDATE] EventDetail dengan Logika Link Google Form
 const EventDetail = ({ event, onBack, onRegister, isRegistered }) => {
   if (!event) return null;
+
+  const handleRegistrationClick = () => {
+    // Pastikan nama kolom di database Supabase sesuai (misal: link_registration)
+    // Gunakan fallback ke mock data jika backend belum mengirim
+    const registrationLink = event.link_registration || event.link_google_form;
+
+    console.log("Mencoba membuka link:", registrationLink);
+
+    if (registrationLink) {
+      window.open(registrationLink, '_blank');
+      onRegister(event); // Optional: Set status jadi terdaftar
+    } else {
+      alert("Maaf, link pendaftaran belum tersedia untuk event ini.");
+    }
+  };
+
   return (
     <div className="animate-fade-in pb-24 bg-white min-h-screen">
       <div className="relative h-64 md:h-80 w-full">
@@ -130,7 +147,13 @@ const EventDetail = ({ event, onBack, onRegister, isRegistered }) => {
         <div className="prose text-gray-600 mb-20"><h3 className="font-bold text-gray-900 mb-2">Deskripsi</h3><p>{event.description || "Deskripsi event belum tersedia."}</p></div>
       </div>
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-20 shadow-lg">
-        {isRegistered ? <Button fullWidth className="bg-green-100 text-green-700 cursor-default"><CheckCircle size={18}/> Terdaftar</Button> : <Button fullWidth onClick={() => onRegister(event)}>Daftar Sekarang</Button>}
+        {isRegistered ? (
+          <Button fullWidth className="bg-green-100 text-green-700 cursor-default"><CheckCircle size={18}/> Terdaftar</Button> 
+        ) : (
+          <Button fullWidth onClick={handleRegistrationClick}>
+            Daftar Sekarang <ExternalLink size={16} className="ml-2 opacity-70"/>
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -179,11 +202,44 @@ const GetInvolved = () => {
 
 // --- 3. MAIN APP ---
 
-// Mock Data Service (Simulasi - Fallback)
+// [UPDATE] MOCK DATA DENGAN LINK REGISTRASI (Untuk Fallback)
 const MOCK_EVENTS = [
-  { id: '1', title: 'Webinar Personal Branding', category: 'Webinar', date: '12 Okt 2025', time: '19:00 WIB', type: 'Online', price: 'Gratis', image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=800', description: 'Pelajari cara membangun brand diri.' },
-  { id: '2', title: 'Bootcamp Fullstack Dev', category: 'Bootcamp', date: '20 Okt 2025', time: '09:00 WIB', type: 'Hybrid', price: 'Beasiswa', image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800', description: 'Belajar coding dari nol sampai mahir.' },
-  { id: '3', title: 'Mental Health Seminar', category: 'Seminar', date: '25 Okt 2025', time: '13:00 WIB', type: 'Online', price: 'Gratis', image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=800', description: 'Menjaga kewarasan di dunia kerja.' }
+  { 
+    id: '1', 
+    title: 'Webinar Personal Branding', 
+    category: 'Webinar', 
+    date: '12 Okt 2025', 
+    time: '19:00 WIB', 
+    type: 'Online', 
+    price: 'Gratis', 
+    image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=800', 
+    description: 'Pelajari cara membangun brand diri.',
+    link_registration: 'https://forms.google.com/form-1-contoh' 
+  },
+  { 
+    id: '2', 
+    title: 'Bootcamp Fullstack Dev', 
+    category: 'Bootcamp', 
+    date: '20 Okt 2025', 
+    time: '09:00 WIB', 
+    type: 'Hybrid', 
+    price: 'Beasiswa', 
+    image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800', 
+    description: 'Belajar coding dari nol sampai mahir.',
+    link_registration: 'https://forms.google.com/form-2-contoh' 
+  },
+  { 
+    id: '3', 
+    title: 'Mental Health Seminar', 
+    category: 'Seminar', 
+    date: '25 Okt 2025', 
+    time: '13:00 WIB', 
+    type: 'Online', 
+    price: 'Gratis', 
+    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=800', 
+    description: 'Menjaga kewarasan di dunia kerja.',
+    link_registration: 'https://forms.google.com/form-3-contoh' 
+  }
 ];
 
 export default function App() {
@@ -224,6 +280,10 @@ export default function App() {
         }
 
         const result = await response.json();
+
+        // --- DEBUGGING DATA BACKEND ---
+        console.log("DATA BACKEND:", result);
+        // ------------------------------
         
         if (result.success && Array.isArray(result.data)) {
            setEvents(result.data); 
@@ -248,7 +308,8 @@ export default function App() {
   const handleRegister = (event) => {
     if (myRegistrations.find(r => r.id === event.id)) { alert('Sudah terdaftar!'); return; }
     setMyRegistrations([...myRegistrations, event]);
-    alert('Berhasil mendaftar!');
+    // Jangan alert di sini lagi jika sudah ada window.open, 
+    // tapi tetap oke untuk feedback visual bahwa state aplikasi sudah terupdate
   };
 
   const confirmUnregister = () => {

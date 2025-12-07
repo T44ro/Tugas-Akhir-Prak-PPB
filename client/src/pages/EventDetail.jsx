@@ -9,20 +9,20 @@ export default function EventDetail({ event, onBack, onRegister, isRegistered })
 
   // --- LOGIKA BARU: Handle Link Google Form ---
   const handleRegistrationClick = () => {
-    // Pastikan kolom di database Supabase bernama 'link_registration'
-    // Jika kolom kamu namanya 'google_form_link', ganti 'event.link_registration' jadi 'event.google_form_link'
-    const registrationLink = event.link_registration;
+    // --- DEBUGGING ---
+    console.log("Data Event saat ini:", event);
+    console.log("Link yang dicoba akses:", event.link_registration);
+    // -----------------
 
-    if (registrationLink) {
-      // Buka link di tab baru
-      window.open(registrationLink, '_blank');
-      
-      // Opsional: Tetap panggil onRegister agar tombol berubah jadi "Terdaftar" di UI (Feedback visual)
-      onRegister(event); 
-    } else {
-      alert("Maaf, link pendaftaran belum tersedia untuk event ini.");
-    }
-  };
+    const registrationLink = event.link_registration;
+
+    if (registrationLink) {
+      window.open(registrationLink, '_blank');
+      onRegister(event); 
+    } else {
+      alert("Maaf, link pendaftaran belum tersedia (kosong) di database.");
+    }
+  };
 
   return (
     <div className="animate-fade-in pb-24 bg-white min-h-screen">
