@@ -1,11 +1,28 @@
 import React from 'react';
-import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Share2, ExternalLink } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 
 export default function EventDetail({ event, onBack, onRegister, isRegistered }) {
   // Jika data event tidak ada (misal refresh halaman dan state hilang), kembalikan null atau loading
   if (!event) return null;
+
+  // --- LOGIKA BARU: Handle Link Google Form ---
+  const handleRegistrationClick = () => {
+    // Pastikan kolom di database Supabase bernama 'link_registration'
+    // Jika kolom kamu namanya 'google_form_link', ganti 'event.link_registration' jadi 'event.google_form_link'
+    const registrationLink = event.link_registration;
+
+    if (registrationLink) {
+      // Buka link di tab baru
+      window.open(registrationLink, '_blank');
+      
+      // Opsional: Tetap panggil onRegister agar tombol berubah jadi "Terdaftar" di UI (Feedback visual)
+      onRegister(event); 
+    } else {
+      alert("Maaf, link pendaftaran belum tersedia untuk event ini.");
+    }
+  };
 
   return (
     <div className="animate-fade-in pb-24 bg-white min-h-screen">
@@ -139,8 +156,9 @@ export default function EventDetail({ event, onBack, onRegister, isRegistered })
                 <CheckCircle size={18} /> Kamu Sudah Terdaftar
               </Button>
             ) : (
-              <Button fullWidth onClick={() => onRegister(event)}>
-                Daftar Sekarang
+              // UPDATE: Menggunakan handler baru untuk redirect ke Google Form
+              <Button fullWidth onClick={handleRegistrationClick}>
+                Daftar Sekarang <ExternalLink size={16} className="ml-2 opacity-70"/>
               </Button>
             )}
           </div>
