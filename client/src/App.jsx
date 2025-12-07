@@ -78,7 +78,11 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 // --- 2. HALAMAN-HALAMAN ---
 
 const Home = ({ setActiveTab, events }) => {
-  const featuredEvents = events ? events.slice(0, 3) : [];
+  // [FIX] Tambahkan pengecekan Array.isArray sebelum slice
+  // Jika events null/object/undefined, gunakan array kosong agar tidak error "slice is not function"
+  const safeEvents = Array.isArray(events) ? events : [];
+  const featuredEvents = safeEvents.slice(0, 3);
+  
   return (
     <div className="pb-24 animate-fade-in">
       <div className="bg-blue-600 text-white rounded-b-[2.5rem] shadow-xl p-6 pt-10 md:p-12 relative overflow-hidden">
@@ -91,12 +95,16 @@ const Home = ({ setActiveTab, events }) => {
       <div className="px-6 mt-8">
         <div className="flex justify-between items-end mb-4"><h3 className="text-lg font-bold text-blue-900">Program Pilihan</h3><button onClick={() => setActiveTab('events')} className="text-sm text-blue-600 font-bold">Lihat Semua</button></div>
         <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-          {featuredEvents.map(event => (
-            <div key={event.id} onClick={() => setActiveTab('events')} className="min-w-[260px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer">
-              <div className="h-32 bg-gray-200 relative"><img src={event.image} className="w-full h-full object-cover" /><div className="absolute top-2 left-2"><Badge type={event.category}>{event.category}</Badge></div></div>
-              <div className="p-3"><h4 className="font-bold text-gray-800 text-sm mb-1 line-clamp-1">{event.title}</h4><p className="text-xs text-gray-500">{event.date}</p></div>
-            </div>
-          ))}
+          {featuredEvents.length > 0 ? (
+             featuredEvents.map(event => (
+              <div key={event.id} onClick={() => setActiveTab('events')} className="min-w-[260px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer">
+                <div className="h-32 bg-gray-200 relative"><img src={event.image} className="w-full h-full object-cover" /><div className="absolute top-2 left-2"><Badge type={event.category}>{event.category}</Badge></div></div>
+                <div className="p-3"><h4 className="font-bold text-gray-800 text-sm mb-1 line-clamp-1">{event.title}</h4><p className="text-xs text-gray-500">{event.date}</p></div>
+              </div>
+            ))
+          ) : (
+            <div className="w-full text-center p-4 text-gray-400 text-sm">Belum ada program unggulan.</div>
+          )}
         </div>
       </div>
     </div>
@@ -171,7 +179,7 @@ const GetInvolved = () => {
 
 // --- 3. MAIN APP ---
 
-// Mock Data Service (Simulasi)
+// Mock Data Service (Simulasi - Fallback)
 const MOCK_EVENTS = [
   { id: '1', title: 'Webinar Personal Branding', category: 'Webinar', date: '12 Okt 2025', time: '19:00 WIB', type: 'Online', price: 'Gratis', image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=800', description: 'Pelajari cara membangun brand diri.' },
   { id: '2', title: 'Bootcamp Fullstack Dev', category: 'Bootcamp', date: '20 Okt 2025', time: '09:00 WIB', type: 'Hybrid', price: 'Beasiswa', image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800', description: 'Belajar coding dari nol sampai mahir.' },
@@ -191,9 +199,6 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Tentukan URL API (Gunakan Environment Variable agar fleksibel saat deploy)
-  // Jika lokal: http://localhost:3000
-  // Jika deploy (Vercel): https://nama-proyek-mu.vercel.app
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
   useEffect(() => {
@@ -207,15 +212,21 @@ export default function App() {
           throw new Error('Gagal mengambil data');
         }
 
-        const data = await response.json();
+        const result = await response.json();
         
-        // Pastikan struktur data sesuai. 
-        // Jika backend mengirim { data: [...] }, gunakan data.data
-        // Jika backend mengirim array langsung [...], gunakan data
-        setEvents(data); 
+        // [FIX] Perbaikan Logika Pengambilan Data
+        // Backend kamu mengirim: { success: true, data: [...] }
+        if (result.success && Array.isArray(result.data)) {
+           setEvents(result.data); // Ambil array di dalam properti .data
+        } else if (Array.isArray(result)) {
+           setEvents(result); // Fallback jika backend mengirim array langsung
+        } else {
+           console.error("Format data tidak dikenali:", result);
+           setEvents([]); // Set kosong agar tidak error
+        }
+
       } catch (error) {
         console.error("Error fetching events:", error);
-        // Fallback ke mock data jika API gagal (opsional)
         setEvents(MOCK_EVENTS); 
       } finally {
         setLoading(false);
@@ -273,6 +284,9 @@ export default function App() {
   if (selectedEvent) return <EventDetail event={selectedEvent} onBack={goBack} onRegister={handleRegister} isRegistered={myRegistrations.some(r => r.id === selectedEvent.id)} />;
   if (showAbout) return <About onBack={goBack} />;
 
+  // [FIX] Pastikan events selalu array sebelum difilter
+  const safeEventsList = Array.isArray(events) ? events : [];
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <ConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={confirmUnregister} title="Batal Daftar?" message="Yakin ingin membatalkan pendaftaran ini?" />
@@ -301,11 +315,15 @@ export default function App() {
             <div className="mb-6"><h2 className="text-2xl font-bold text-blue-900 mb-2">Program Kami</h2><div className="relative"><input type="text" placeholder="Cari..." className="w-full pl-10 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-blue-500 bg-white" onChange={(e) => setSearchQuery(e.target.value)} /><Search className="absolute left-3 top-3.5 text-gray-400" size={20} /></div></div>
             {loading ? <div className="flex justify-center py-20"><Loader className="animate-spin text-blue-600"/></div> : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-24">
-                {events.filter(e => e.title.toLowerCase().includes(searchQuery.toLowerCase())).map(event => (
-                  <div key={event.id} onClick={() => { setSelectedEvent(event); window.scrollTo(0,0); }} className="cursor-pointer">
-                    <EventCard event={event} onRegister={(e) => { e.stopPropagation(); handleRegister(event); }} isRegistered={myRegistrations.some(r => r.id === event.id)} />
-                  </div>
-                ))}
+                {safeEventsList.length > 0 ? (
+                    safeEventsList.filter(e => e.title.toLowerCase().includes(searchQuery.toLowerCase())).map(event => (
+                      <div key={event.id} onClick={() => { setSelectedEvent(event); window.scrollTo(0,0); }} className="cursor-pointer">
+                        <EventCard event={event} onRegister={(e) => { e.stopPropagation(); handleRegister(event); }} isRegistered={myRegistrations.some(r => r.id === event.id)} />
+                      </div>
+                    ))
+                ) : (
+                    <div className="col-span-3 text-center py-10 text-gray-400">Belum ada data event.</div>
+                )}
               </div>
             )}
           </div>
