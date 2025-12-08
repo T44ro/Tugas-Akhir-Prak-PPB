@@ -111,20 +111,26 @@ const Home = ({ setActiveTab, events, user }) => {
   );
 };
 
-// [UPDATE] EventDetail dengan Logika Link Google Form
+// [UPDATE: SUDAH ADA PREVENT DEFAULT AGAR TIDAK REFRESH]
 const EventDetail = ({ event, onBack, onRegister, isRegistered }) => {
   if (!event) return null;
 
-  const handleRegistrationClick = () => {
-    // Pastikan nama kolom di database Supabase sesuai (misal: link_registration)
-    // Gunakan fallback ke mock data jika backend belum mengirim
+  const handleRegistrationClick = (e) => {
+    // 1. MATIKAN REFRESH HALAMAN (PENTING!)
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 2. Ambil Link
     const registrationLink = event.link_registration || event.link_google_form;
 
     console.log("Mencoba membuka link:", registrationLink);
 
     if (registrationLink) {
+      // 3. Buka Tab Baru
       window.open(registrationLink, '_blank');
-      onRegister(event); // Optional: Set status jadi terdaftar
+      
+      // 4. Update Database & State (Tanpa Refresh)
+      onRegister(event); 
     } else {
       alert("Maaf, link pendaftaran belum tersedia untuk event ini.");
     }
@@ -202,7 +208,7 @@ const GetInvolved = () => {
 
 // --- 3. MAIN APP ---
 
-// [UPDATE] MOCK DATA DENGAN LINK REGISTRASI (Untuk Fallback)
+// MOCK DATA (Fallback)
 const MOCK_EVENTS = [
   { 
     id: '1', 
@@ -251,39 +257,47 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [idToCancel, setIdToCancel] = useState(null);
 
-  // State untuk data dan loading
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // State untuk User Auth
   const [user, setUser] = useState(null);
 
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-  // Efek untuk cek login saat aplikasi dibuka
+  // --- 1. LOAD USER & REGISTRASI ---
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      fetchMyRegistrations(parsedUser.id);
     }
   }, []);
 
-  // Efek untuk fetch data events
+  // --- 2. FETCH DATA REGISTRASI ---
+  const fetchMyRegistrations = async (userId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/registrations/${userId}`);
+      const result = await res.json();
+      if (result.success) {
+        setMyRegistrations(result.data); 
+      }
+    } catch (error) {
+      console.error("Gagal load registrasi:", error);
+    }
+  };
+
+  // --- 3. FETCH DATA EVENTS ---
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
         const response = await fetch(`${API_URL}/api/events`);
-        
         if (!response.ok) {
           throw new Error('Gagal mengambil data');
         }
-
         const result = await response.json();
-
-        // --- DEBUGGING DATA BACKEND ---
+        
         console.log("DATA BACKEND:", result);
-        // ------------------------------
         
         if (result.success && Array.isArray(result.data)) {
            setEvents(result.data); 
@@ -293,7 +307,6 @@ export default function App() {
            console.error("Format data tidak dikenali:", result);
            setEvents([]); 
         }
-
       } catch (error) {
         console.error("Error fetching events:", error);
         setEvents(MOCK_EVENTS); 
@@ -301,30 +314,68 @@ export default function App() {
         setLoading(false);
       }
     };
-
     fetchEvents();
   }, []);
 
-  const handleRegister = (event) => {
+  // --- 4. DAFTAR EVENT (Database) ---
+  const handleRegister = async (event) => {
+    if (!user) { alert('Silakan login dulu!'); return; }
+    
     if (myRegistrations.find(r => r.id === event.id)) { alert('Sudah terdaftar!'); return; }
-    setMyRegistrations([...myRegistrations, event]);
-    // Jangan alert di sini lagi jika sudah ada window.open, 
-    // tapi tetap oke untuk feedback visual bahwa state aplikasi sudah terupdate
+
+    try {
+      const res = await fetch(`${API_URL}/api/registrations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: user.id,
+            event_id: event.id
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+
+      setMyRegistrations([...myRegistrations, event]);
+      alert('Berhasil mendaftar!');
+
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
-  const confirmUnregister = () => {
-    setMyRegistrations(myRegistrations.filter(r => r.id !== idToCancel));
-    setIsModalOpen(false);
+  // --- 5. BATAL DAFTAR (Hapus Database) ---
+  const confirmUnregister = async () => {
+    try {
+        const res = await fetch(`${API_URL}/api/registrations`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: user.id,
+                event_id: idToCancel
+            })
+        });
+        
+        const result = await res.json();
+        if(!res.ok) throw new Error(result.message);
+
+        setMyRegistrations(myRegistrations.filter(r => r.id !== idToCancel));
+        setIsModalOpen(false);
+    } catch (error) {
+        alert("Gagal membatalkan: " + error.message);
+    }
   };
 
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    fetchMyRegistrations(userData.id);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
+    setMyRegistrations([]); 
   };
 
   const goToAbout = () => {
@@ -360,7 +411,6 @@ export default function App() {
   );
 
   // --- LOGIKA UTAMA ---
-  // Jika user belum login, tampilkan halaman Login
   if (!user) {
     return <Login onLogin={handleLogin} />;
   }
