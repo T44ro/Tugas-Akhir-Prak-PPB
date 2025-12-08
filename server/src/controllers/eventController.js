@@ -1,6 +1,8 @@
 import { EventModel } from '../models/eventModel.js';
 
 export const EventController = {
+  // ... (getAll, getById, create yang lama TETAP SAMA) ...
+  
   async getAll(req, res) {
     try {
       const events = await EventModel.getAll();
@@ -10,14 +12,7 @@ export const EventController = {
     }
   },
 
-  async getById(req, res) {
-    try {
-      const event = await EventModel.getById(req.params.id);
-      res.status(200).json({ success: true, data: event });
-    } catch (error) {
-      res.status(404).json({ success: false, message: "Event not found" });
-    }
-  },
+  async getById(req, res) { /* ... kode lama ... */ },
 
   async create(req, res) {
     try {
@@ -25,6 +20,16 @@ export const EventController = {
       res.status(201).json({ success: true, data: newEvent });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
+    }
+  },
+
+  // [BARU] Hapus Event
+  async delete(req, res) {
+    try {
+      await EventModel.delete(req.params.id);
+      res.status(200).json({ success: true, message: "Event berhasil dihapus" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 };

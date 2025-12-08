@@ -3,7 +3,7 @@ import {
   Award, User, Users, Search, Loader, Trash2, Info, HandHeart, BookOpen, 
   ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink
 } from 'lucide-react';
-import Login from './Login'; 
+import Login from './Login'; // Pastikan file Login.jsx ada di folder yang sama
 
 // --- 1. KOMPONEN UI DASAR ---
 
