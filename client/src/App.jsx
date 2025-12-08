@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Award, User, Users, Search, Loader, Trash2, Info, HandHeart, BookOpen, 
-  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink
+  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink, Plus
 } from 'lucide-react';
-import Login from './Login'; // Pastikan file Login.jsx ada di folder yang sama
+import Login from './Login'; 
+import AddEventModal from './AddEventModal'; // [BARU] Import Modal Tambah Event
 
 // --- 1. KOMPONEN UI DASAR ---
 
@@ -59,8 +60,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
 
 const EventCard = ({ event, onRegister, isRegistered }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow h-full">
-      <div className="h-40 relative group overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow h-full relative group">
+      <div className="h-40 relative overflow-hidden">
         <img src={event.image} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div className="absolute top-3 left-3"><Badge type={event.category}>{event.category}</Badge></div>
         <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 to-transparent p-4"><span className="text-white font-bold text-xs bg-yellow-500 px-2 py-1 rounded shadow-sm">{event.price}</span></div>
@@ -111,23 +112,17 @@ const Home = ({ setActiveTab, events, user }) => {
   );
 };
 
-// [UPDATE] EventDetail: Prevent Default & Stop Propagation
 const EventDetail = ({ event, onBack, onRegister, isRegistered }) => {
   if (!event) return null;
 
   const handleRegistrationClick = (e) => {
-    // 1. PENTING: Mencegah refresh halaman
     e.preventDefault();
     e.stopPropagation();
 
-    // 2. Ambil Link
     const registrationLink = event.link_registration || event.link_google_form;
 
     if (registrationLink) {
-      // 3. Buka Tab Baru
       window.open(registrationLink, '_blank');
-      
-      // 4. Update Database
       onRegister(event); 
     } else {
       alert("Maaf, link pendaftaran belum tersedia.");
@@ -253,6 +248,9 @@ export default function App() {
   const [myRegistrations, setMyRegistrations] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [idToCancel, setIdToCancel] = useState(null);
+  
+  // [BARU] State untuk Modal Tambah Event
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,39 +279,38 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_URL}/api/events`);
-        if (!response.ok) throw new Error('Gagal mengambil data');
-        const result = await response.json();
-        
-        if (result.success && Array.isArray(result.data)) {
-           setEvents(result.data); 
-        } else if (Array.isArray(result)) {
-           setEvents(result); 
-        } else {
-           setEvents([]); 
-        }
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        setEvents(MOCK_EVENTS); 
-      } finally {
-        setLoading(false);
+  // Dipisahkan agar bisa dipanggil setelah menambah event baru
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/events`);
+      if (!response.ok) throw new Error('Gagal mengambil data');
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.data)) {
+         setEvents(result.data); 
+      } else if (Array.isArray(result)) {
+         setEvents(result); 
+      } else {
+         setEvents([]); 
       }
-    };
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      setEvents(MOCK_EVENTS); 
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchEvents();
   }, []);
 
   const handleRegister = async (event) => {
     if (!user) { alert('Silakan login dulu!'); return; }
-    
-    // Cek Duplikat Lokal (Tanpa Alert Error, cukup return)
     if (myRegistrations.find(r => r.id === event.id)) { return; }
 
     try {
-      // Optimistic UI Update
       setMyRegistrations((prev) => [...prev, event]);
 
       const res = await fetch(`${API_URL}/api/registrations`, {
@@ -325,7 +322,6 @@ export default function App() {
         })
       });
 
-      // Cek apakah respon bukan JSON (biasanya error server/html)
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("Server error (HTML response)");
@@ -336,7 +332,6 @@ export default function App() {
 
     } catch (error) {
       console.error("Gagal simpan ke DB:", error);
-      // Rollback jika gagal
       setMyRegistrations((prev) => prev.filter(r => r.id !== event.id));
     }
   };
@@ -362,17 +357,35 @@ export default function App() {
     }
   };
 
-  // --- PERBAIKAN LOGOUT: RESET STATE ---
+  // [BARU] Fungsi Hapus Event (Database)
+  const handleDeleteEvent = async (e, eventId) => {
+    e.stopPropagation(); // Agar tidak masuk ke halaman detail
+    if (!confirm("Yakin ingin menghapus event ini secara permanen dari Database?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/events/${eventId}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.success) {
+        alert("Event berhasil dihapus!");
+        fetchEvents(); // Refresh data setelah dihapus
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      alert("Gagal hapus: " + err.message);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    setMyRegistrations([]); // PENTING: Kosongkan list event
+    setMyRegistrations([]); 
   };
 
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-    setMyRegistrations([]); // Reset dulu sebelum fetch baru
+    setMyRegistrations([]); 
     fetchMyRegistrations(userData.id);
   };
 
@@ -416,8 +429,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Modal Konfirmasi Batal Daftar */}
       <ConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={confirmUnregister} title="Batal Daftar?" message="Yakin ingin membatalkan pendaftaran ini?" />
       
+      {/* [BARU] Modal Tambah Event */}
+      <AddEventModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onEventAdded={fetchEvents} 
+      />
+
       {/* Header */}
       <div className="hidden md:flex bg-white px-8 py-4 justify-between items-center shadow-sm sticky top-0 z-50">
         <h1 className="font-bold text-blue-900 text-xl flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>BinaKarier</h1>
@@ -443,13 +464,36 @@ export default function App() {
         
         {activeTab === 'events' && (
           <div className="p-6 md:p-0 animate-fade-in">
-            <div className="mb-6"><h2 className="text-2xl font-bold text-blue-900 mb-2">Program Kami</h2><div className="relative"><input type="text" placeholder="Cari..." className="w-full pl-10 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-blue-500 bg-white" onChange={(e) => setSearchQuery(e.target.value)} /><Search className="absolute left-3 top-3.5 text-gray-400" size={20} /></div></div>
+            <div className="mb-6 flex justify-between items-end">
+                <div className="flex-1 mr-4">
+                    <h2 className="text-2xl font-bold text-blue-900 mb-2">Program Kami</h2>
+                    <div className="relative"><input type="text" placeholder="Cari..." className="w-full pl-10 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-blue-500 bg-white" onChange={(e) => setSearchQuery(e.target.value)} /><Search className="absolute left-3 top-3.5 text-gray-400" size={20} /></div>
+                </div>
+                
+                {/* [BARU] Tombol Buat Event */}
+                <button 
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="bg-blue-600 text-white p-3 rounded-xl shadow-lg hover:bg-blue-700 transition flex items-center gap-2 font-bold mb-1"
+                >
+                    <Plus size={20} /> <span className="hidden md:inline">Buat Event</span>
+                </button>
+            </div>
+
             {loading ? <div className="flex justify-center py-20"><Loader className="animate-spin text-blue-600"/></div> : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-24">
                 {safeEventsList.length > 0 ? (
                     safeEventsList.filter(e => e.title.toLowerCase().includes(searchQuery.toLowerCase())).map(event => (
-                      <div key={event.id} onClick={() => { setSelectedEvent(event); window.scrollTo(0,0); }} className="cursor-pointer">
+                      <div key={event.id} onClick={() => { setSelectedEvent(event); window.scrollTo(0,0); }} className="cursor-pointer relative group">
                         <EventCard event={event} onRegister={(e) => { e.stopPropagation(); handleRegister(event); }} isRegistered={myRegistrations.some(r => r.id === event.id)} />
+                        
+                        {/* [BARU] Tombol Hapus Event */}
+                        <button 
+                            onClick={(e) => handleDeleteEvent(e, event.id)}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-red-600"
+                            title="Hapus Event"
+                        >
+                            <Trash2 size={16} />
+                        </button>
                       </div>
                     ))
                 ) : (
