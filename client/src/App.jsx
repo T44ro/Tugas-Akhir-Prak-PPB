@@ -3,7 +3,7 @@ import {
   Award, User, Users, Search, Loader, Trash2, Info, HandHeart, BookOpen, 
   ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink
 } from 'lucide-react';
-import Login from './Login'; // Pastikan file Login.jsx ada di folder yang sama
+import Login from './Login'; 
 
 // --- 1. KOMPONEN UI DASAR ---
 
@@ -111,28 +111,26 @@ const Home = ({ setActiveTab, events, user }) => {
   );
 };
 
-// [UPDATE: SUDAH ADA PREVENT DEFAULT AGAR TIDAK REFRESH]
+// [UPDATE] EventDetail: Prevent Default & Stop Propagation
 const EventDetail = ({ event, onBack, onRegister, isRegistered }) => {
   if (!event) return null;
 
   const handleRegistrationClick = (e) => {
-    // 1. MATIKAN REFRESH HALAMAN (PENTING!)
+    // 1. PENTING: Mencegah refresh halaman
     e.preventDefault();
     e.stopPropagation();
 
     // 2. Ambil Link
     const registrationLink = event.link_registration || event.link_google_form;
 
-    console.log("Mencoba membuka link:", registrationLink);
-
     if (registrationLink) {
       // 3. Buka Tab Baru
       window.open(registrationLink, '_blank');
       
-      // 4. Update Database & State (Tanpa Refresh)
+      // 4. Update Database
       onRegister(event); 
     } else {
-      alert("Maaf, link pendaftaran belum tersedia untuk event ini.");
+      alert("Maaf, link pendaftaran belum tersedia.");
     }
   };
 
@@ -208,7 +206,6 @@ const GetInvolved = () => {
 
 // --- 3. MAIN APP ---
 
-// MOCK DATA (Fallback)
 const MOCK_EVENTS = [
   { 
     id: '1', 
@@ -263,7 +260,6 @@ export default function App() {
 
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-  // --- 1. LOAD USER & REGISTRASI ---
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -273,38 +269,31 @@ export default function App() {
     }
   }, []);
 
-  // --- 2. FETCH DATA REGISTRASI ---
   const fetchMyRegistrations = async (userId) => {
     try {
       const res = await fetch(`${API_URL}/api/registrations/${userId}`);
       const result = await res.json();
       if (result.success) {
-        setMyRegistrations(result.data); 
+        setMyRegistrations(result.data);
       }
     } catch (error) {
       console.error("Gagal load registrasi:", error);
     }
   };
 
-  // --- 3. FETCH DATA EVENTS ---
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
         const response = await fetch(`${API_URL}/api/events`);
-        if (!response.ok) {
-          throw new Error('Gagal mengambil data');
-        }
+        if (!response.ok) throw new Error('Gagal mengambil data');
         const result = await response.json();
-        
-        console.log("DATA BACKEND:", result);
         
         if (result.success && Array.isArray(result.data)) {
            setEvents(result.data); 
         } else if (Array.isArray(result)) {
            setEvents(result); 
         } else {
-           console.error("Format data tidak dikenali:", result);
            setEvents([]); 
         }
       } catch (error) {
@@ -317,13 +306,16 @@ export default function App() {
     fetchEvents();
   }, []);
 
-  // --- 4. DAFTAR EVENT (Database) ---
   const handleRegister = async (event) => {
     if (!user) { alert('Silakan login dulu!'); return; }
     
-    if (myRegistrations.find(r => r.id === event.id)) { alert('Sudah terdaftar!'); return; }
+    // Cek Duplikat Lokal (Tanpa Alert Error, cukup return)
+    if (myRegistrations.find(r => r.id === event.id)) { return; }
 
     try {
+      // Optimistic UI Update
+      setMyRegistrations((prev) => [...prev, event]);
+
       const res = await fetch(`${API_URL}/api/registrations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -333,18 +325,22 @@ export default function App() {
         })
       });
 
+      // Cek apakah respon bukan JSON (biasanya error server/html)
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server error (HTML response)");
+      }
+
       const result = await res.json();
       if (!res.ok) throw new Error(result.message);
 
-      setMyRegistrations([...myRegistrations, event]);
-      alert('Berhasil mendaftar!');
-
     } catch (error) {
-      alert(error.message);
+      console.error("Gagal simpan ke DB:", error);
+      // Rollback jika gagal
+      setMyRegistrations((prev) => prev.filter(r => r.id !== event.id));
     }
   };
 
-  // --- 5. BATAL DAFTAR (Hapus Database) ---
   const confirmUnregister = async () => {
     try {
         const res = await fetch(`${API_URL}/api/registrations`, {
@@ -366,16 +362,18 @@ export default function App() {
     }
   };
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    fetchMyRegistrations(userData.id);
-  };
-
+  // --- PERBAIKAN LOGOUT: RESET STATE ---
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    setMyRegistrations([]); 
+    setMyRegistrations([]); // PENTING: Kosongkan list event
+  };
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setMyRegistrations([]); // Reset dulu sebelum fetch baru
+    fetchMyRegistrations(userData.id);
   };
 
   const goToAbout = () => {
@@ -410,11 +408,7 @@ export default function App() {
     </button>
   );
 
-  // --- LOGIKA UTAMA ---
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
+  if (!user) return <Login onLogin={handleLogin} />;
   if (selectedEvent) return <EventDetail event={selectedEvent} onBack={goBack} onRegister={handleRegister} isRegistered={myRegistrations.some(r => r.id === selectedEvent.id)} />;
   if (showAbout) return <About onBack={goBack} />;
 
