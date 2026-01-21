@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Award, User, Users, Search, Loader, Trash2, Info, HandHeart, BookOpen, 
-  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink, Plus, Pencil
+  ArrowLeft, Calendar, Clock, MapPin, CheckCircle, Briefcase, LogOut, ExternalLink, Plus, Pencil, LogIn
 } from 'lucide-react';
 import Login from './Login'; 
 import AddEventModal from './AddEventModal'; 
@@ -97,7 +97,7 @@ const Home = ({ setActiveTab, events, user }) => {
     <div className="pb-24 animate-fade-in">
       <div className="bg-blue-600 text-white rounded-b-[2.5rem] shadow-xl/20 p-6 pt-10 md:p-12 relative overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-2">Halo, {user?.name || 'Pejuang Karir'} 👋</h1>
+          <h1 className="text-2xl font-bold mb-2">Halo, {user?.name || 'STEPPERS'} 👋</h1>
           <h2 className="text-3xl font-bold mb-6">Langkah Kamu <span className="text-yellow-400">Dimulai Disini.</span></h2>
           <div className="bg-white/10 p-2 rounded-xl flex items-center border border-white/20"><Search className="text-blue-200 ml-2" size={18}/><input type="text" placeholder="Cari Bootcamp..." className="bg-transparent border-none text-white placeholder-blue-200 text-sm w-full p-2 focus:outline-none" onClick={() => setActiveTab('events')} /></div>
         </div>
@@ -264,7 +264,11 @@ export default function App() {
   useEffect(() => { fetchEvents(); }, []);
 
   const handleRegister = async (event) => {
-    if (!user) { alert('Silakan login dulu!'); return; }
+    if (!user) { 
+        alert('Silakan login terlebih dahulu untuk mendaftar.'); 
+        setActiveTab('dashboard'); // Arahkan ke tab dashboard untuk login
+        return; 
+    }
     if (myRegistrations.find(r => r.id === event.id)) { return; }
 
     try {
@@ -333,7 +337,7 @@ export default function App() {
     </button>
   );
 
-  if (!user) return <Login onLogin={handleLogin} />;
+  // [REMOVED] Gerbang login global dihapus agar user bisa lihat-lihat dulu
   if (selectedEvent) return <EventDetail event={selectedEvent} onBack={goBack} onRegister={handleRegister} isRegistered={myRegistrations.some(r => r.id === selectedEvent.id)} />;
   if (showAbout) return <About onBack={goBack} />;
 
@@ -352,7 +356,7 @@ export default function App() {
         <AddEventModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onEventAdded={fetchEvents} eventToEdit={eventToEdit} />
       )}
 
-      {/* Header dengan efek backdrop blur */}
+      {/* Header Desktop dengan efek backdrop blur */}
       <div className="hidden md:flex bg-white backdrop-blur-sm px-8 py-3 justify-between items-center shadow-sm sticky top-0 z-50">
         <div className="font-bold text-yellow-500 text-xl flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
              <img src="/logo.png" alt="FirstStep Journey" className="h-12 w-auto object-contain" />
@@ -365,16 +369,25 @@ export default function App() {
         </div>
         <div className="flex items-center gap-4">
             <button onClick={goToAbout} className="text-white flex items-center gap-1 text-sm"><Info size={16}/> Tentang</button>
-            <button onClick={handleLogout} className="text-red-600 flex items-center gap-1 text-sm font-bold bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100"><LogOut size={16}/> Keluar</button>
+            {user ? (
+                <button onClick={handleLogout} className="text-red-600 flex items-center gap-1 text-sm font-bold bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100"><LogOut size={16}/> Keluar</button>
+            ) : (
+                <button onClick={() => setActiveTab('dashboard')} className="text-blue-600 flex items-center gap-1 text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100"><LogIn size={16}/> Masuk</button>
+            )}
         </div>
       </div>
       
+      {/* Header Mobile */}
       <div className="md:hidden bg-white backdrop-blur-sm px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-40">
         <div className="font-bold text-yellow-500 text-lg flex items-center gap-2">
             <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
             <span>FirstStep Journey</span>
         </div>
-        <button onClick={handleLogout} className="text-red-500"><LogOut size={20}/></button>
+        {user ? (
+            <button onClick={handleLogout} className="text-red-500"><LogOut size={20}/></button>
+        ) : (
+            <button onClick={() => setActiveTab('dashboard')} className="text-blue-600 font-bold text-sm">Masuk</button>
+        )}
       </div>
 
       {/* Main Content dengan background transparan agar footer doodle terlihat */}
@@ -413,36 +426,42 @@ export default function App() {
 
         {activeTab === 'get-involved' && <GetInvolved />}
 
+        {/* [MODIFIED] Dashboard Logic: Tampilkan Profil jika login, Tampilkan Form Login jika belum */}
         {activeTab === 'dashboard' && (
-          <div className="p-6 md:p-0 animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-2xl font-bold text-blue-900">Akun Saya</h2>
-                 <button onClick={handleLogout} className="md:hidden text-red-600 font-bold text-sm">Logout</button>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm/100 border border-gray-100 mb-6 flex items-center gap-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          user ? (
+            <div className="p-6 md:p-0 animate-fade-in">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-blue-900">Akun Saya</h2>
+                    <button onClick={handleLogout} className="md:hidden text-red-600 font-bold text-sm">Logout</button>
                 </div>
-                <div>
-                    <h3 className="font-bold text-lg text-gray-900">{user?.name}</h3>
-                    <p className="text-gray-500 text-sm">{user?.email}</p>
+                
+                <div className="bg-white p-6 rounded-xl shadow-sm/100 border border-gray-100 mb-6 flex items-center gap-4">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
+                        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg text-gray-900">{user?.name}</h3>
+                        <p className="text-gray-500 text-sm">{user?.email}</p>
+                    </div>
                 </div>
-            </div>
 
-            <div className="bg-blue-600 p-6 rounded-xl text-white shadow-lg/20 mb-8"><div className="text-4xl font-bold mb-1">{myRegistrations.length}</div><div className="text-blue-100 text-sm">Event Diikuti</div></div>
-            <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Event Terdaftar</h3>
-            <div className="space-y-3 pb-24">
-              {myRegistrations.length === 0 ? <p className="text-gray-400 text-center py-10">Belum ada event.</p> : 
-                myRegistrations.map(event => (
-                  <div key={event.id} onClick={() => setSelectedEvent(event)} className="bg-white p-4 rounded-xl shadow-sm/100 border-l-4 border-yellow-400 flex justify-between items-center cursor-pointer">
-                    <div className="flex-1"><h4 className="font-bold text-gray-900">{event.title}</h4><span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">TERDAFTAR</span></div>
-                    <button onClick={(e) => { e.stopPropagation(); setIdToCancel(event.id); setIsModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-full"><Trash2 size={20} /></button>
-                  </div>
-                ))
-              }
+                <div className="bg-blue-600 p-6 rounded-xl text-white shadow-lg/20 mb-8"><div className="text-4xl font-bold mb-1">{myRegistrations.length}</div><div className="text-blue-100 text-sm">Event Diikuti</div></div>
+                <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Event Terdaftar</h3>
+                <div className="space-y-3 pb-24">
+                {myRegistrations.length === 0 ? <p className="text-gray-400 text-center py-10">Belum ada event.</p> : 
+                    myRegistrations.map(event => (
+                    <div key={event.id} onClick={() => setSelectedEvent(event)} className="bg-white p-4 rounded-xl shadow-sm/100 border-l-4 border-yellow-400 flex justify-between items-center cursor-pointer">
+                        <div className="flex-1"><h4 className="font-bold text-gray-900">{event.title}</h4><span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">TERDAFTAR</span></div>
+                        <button onClick={(e) => { e.stopPropagation(); setIdToCancel(event.id); setIsModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-full"><Trash2 size={20} /></button>
+                    </div>
+                    ))
+                }
+                </div>
             </div>
-          </div>
+          ) : (
+            // Jika belum login, tampilkan komponen Login di tab dashboard
+            <Login onLogin={handleLogin} />
+          )
         )}
       </main>
 
@@ -450,7 +469,7 @@ export default function App() {
         <NavButton id="home" label="Beranda" icon={Award} />
         <NavButton id="events" label="Program" icon={BookOpen} />
         <NavButton id="get-involved" label="Gabung" icon={HandHeart} />
-        <NavButton id="dashboard" label="Akun" icon={User} />
+        <NavButton id="dashboard" label={user ? "Akun" : "Masuk"} icon={User} />
         <NavButton id="about" label="About" icon={Info} />
       </div>
     </div>
