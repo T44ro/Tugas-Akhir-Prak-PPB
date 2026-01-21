@@ -7,5 +7,5 @@ router.get('/', EventController.getAll);
 router.get('/:id', EventController.getById);
 router.post('/', EventController.create);
 router.delete('/:id', EventController.delete); // [BARU]
-
+router.put('/:id', EventController.updateEvent);
 export default router;

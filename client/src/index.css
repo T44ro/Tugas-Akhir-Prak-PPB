@@ -4,7 +4,6 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,32 +14,33 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f9fafb; /* Gray-50 matches the app background */
+  
+  /* [PERBAIKAN] Gradasi Biru Muda (#dbeafe) ke Putih (#ffffff) */
+  /* HAPUS #010faa jika Anda ingin bawahnya putih bersih */
+  background: linear-gradient(to bottom, #85baff 0%, #ffffff 50%);
+  
+  background-attachment: fixed;
 }
 
-/* --- Utilities Khusus PWA --- */
-
-/* Menyembunyikan scrollbar tapi tetap bisa di-scroll (untuk horizontal list) */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+/* ... sisa kode lainnya (scrollbar-hide, animation, footer-doodle-bg) biarkan tetap sama ... */
+.footer-doodle-bg {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50vh; 
+  z-index: 0;   
+  background-image: url('/doodle-bg.jpg');
+  background-repeat: repeat;
+  background-size: 700px auto;
+  background-position: center bottom;
+  opacity: 0.3; 
+  -webkit-mask-image: linear-gradient(to top, black 0%, transparent 100%);
+  mask-image: linear-gradient(to top, black 0%, transparent 100%);
+  pointer-events: none; 
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
-}
-
-/* Animasi halus saat ganti tab */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* Support untuk area "notch" atau "home bar" di iPhone terbaru */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+main, header, nav, .sticky {
+  position: relative;
+  z-index: 1; 
 }

@@ -23,6 +23,29 @@ export const EventController = {
     }
   },
 
+  // [BARU] Fungsi Update Event
+  async updateEvent(req, res) {
+    try {
+      const { id } = req.params;
+      const updates = req.body; // Data baru yang dikirim dari frontend
+
+      // Panggil Model (pastikan model Supabase Anda mendukung update)
+      const { data, error } = await EventModel.update(id, updates);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Event berhasil diperbarui",
+        data
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
   // [BARU] Hapus Event
   async delete(req, res) {
     try {

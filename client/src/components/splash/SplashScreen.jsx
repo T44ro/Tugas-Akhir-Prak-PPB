@@ -68,12 +68,12 @@ export default function SplashScreen({ onComplete }) {
         <h1 className={`text-3xl font-bold text-white mb-2 tracking-tight transition-all duration-1000 delay-100 ${
             fadeIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
         }`}>
-          BinaKarier
+          FirstStep Journey
         </h1>
         <p className={`text-blue-100 text-sm mb-12 font-medium transition-all duration-1000 delay-200 ${
             fadeIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
         }`}>
-          Masa Depan Dimulai Disini
+          First Step Matters
         </p>
 
         {/* Loading Bar */}

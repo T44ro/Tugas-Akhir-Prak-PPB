@@ -13,7 +13,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'BinaKarier - Platform NGO',
-        short_name: 'BinaKarier',
+        short_name: 'FirstStep Journey',
         description: 'Platform pengembangan karir dan diri nirlaba',
         theme_color: '#2563eb', // Warna Biru Utama (Blue-600)
         background_color: '#ffffff', // Warna Putih

@@ -134,7 +134,7 @@ export default function EventDetail({ event, onBack, onRegister, isRegistered })
                  </div>
               </div>
               <div>
-                <p className="font-bold text-gray-900">Tim Ahli BinaKarier</p>
+                <p className="font-bold text-gray-900">Tim Ahli FirsStep Journey</p>
                 <p className="text-sm text-gray-500">Senior Practitioner</p>
               </div>
             </div>

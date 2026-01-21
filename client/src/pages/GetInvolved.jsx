@@ -20,7 +20,7 @@ const VOLUNTEER_ROLES = [
     type: 'Project Based',
     location: 'Hybrid (Jakarta)',
     image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=800',
-    description: 'Membantu merencanakan dan mengeksekusi event webinar serta bootcamp bulanan BinaKarier. Anda akan belajar manajemen acara dari A-Z.',
+    description: 'Membantu merencanakan dan mengeksekusi event webinar serta bootcamp bulanan FirstStep Journey. Anda akan belajar manajemen acara dari A-Z.',
     requirements: [
       'Memiliki pengalaman mengurus event kampus/organisasi',
       'Komunikatif dan bisa bekerja dalam tim',
@@ -34,7 +34,7 @@ const VOLUNTEER_ROLES = [
     type: 'Remote',
     location: 'Online',
     image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800',
-    description: 'Mengelola konten Instagram dan LinkedIn BinaKarier untuk menyebarkan dampak positif dan tips karir kepada audiens yang lebih luas.',
+    description: 'Mengelola konten Instagram dan LinkedIn FirstStep Journey untuk menyebarkan dampak positif dan tips karir kepada audiens yang lebih luas.',
     requirements: [
       'Kreatif dan up-to-date dengan tren media sosial',
       'Bisa menggunakan Canva/Figma dasar',
@@ -213,7 +213,7 @@ export default function GetInvolved() {
             
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <a 
-                href="mailto:partnership@binakarier.org" 
+                href="mailto:firststepjourney12@gmail.com" 
                 className="flex items-center justify-center gap-2 bg-white text-blue-900 px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg"
               >
                 <Mail size={18} /> Kirim Proposal

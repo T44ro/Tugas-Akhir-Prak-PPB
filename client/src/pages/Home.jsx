@@ -28,7 +28,7 @@ const Home = ({ setActiveTab, events }) => {
           
           <div className="mb-6">
             <h2 className="text-3xl font-bold mb-2 leading-tight">
-              Masa Depan <br/> 
+              Langkah kamu <br/> 
               <span className="text-yellow-400">Dimulai Disini.</span>
             </h2>
             <p className="text-blue-100 text-sm max-w-[80%]">

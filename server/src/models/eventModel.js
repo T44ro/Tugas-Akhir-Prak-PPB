@@ -25,5 +25,9 @@ export const EventModel = {
     const { error } = await supabase.from('events').delete().eq('id', id);
     if (error) throw error;
     return true;
-  }
+  },
+
+  async update(id, updates) {
+  return await supabase.from('events').update(updates).eq('id', id).select();
+  },
 };
