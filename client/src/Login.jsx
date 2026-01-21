@@ -65,7 +65,7 @@ export default function Login({ onLogin }) {
              <img src="/logo.png" alt="Logo" className="h-16 object-contain" onError={(e) => e.target.style.display='none'}/>
           </div>
           <h1 className="text-2xl font-bold text-blue-900">{isLoginView ? 'Selamat Datang' : 'Buat Akun'}</h1>
-          <p className="text-gray-500 text-sm">Platform Karir NGO</p>
+          <p className="text-blue-900 text-2xl">Steppers!!</p>
         </div>
 
         {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm text-center">{error}</div>}

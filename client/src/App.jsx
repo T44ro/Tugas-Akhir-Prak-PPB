@@ -67,7 +67,7 @@ const EventCard = ({ event, onRegister, isRegistered, isAdmin, onEdit, onDelete 
         <div className="absolute top-3 left-3"><Badge type={event.category}>{event.category}</Badge></div>
         
         {isAdmin && (
-           <div className="absolute top-2 right-2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+           <div className="absolute top-2 right-2 flex gap-2 z-20 opacity-70 transition-opacity">
               <button onClick={(e) => { e.stopPropagation(); onEdit(event); }} className="bg-yellow-400 text-blue-900 p-2 rounded-full shadow-md/100 hover:bg-yellow-300 transition-colors" title="Edit Event"><Pencil size={16} /></button>
               <button onClick={(e) => { e.stopPropagation(); onDelete(e, event.id); }} className="bg-red-500 text-white p-2 rounded-full shadow-md/100 hover:bg-red-600 transition-colors" title="Hapus Event"><Trash2 size={16} /></button>
            </div>
