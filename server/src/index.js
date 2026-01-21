@@ -8,35 +8,41 @@ import registrationRoutes from './routes/registrationRoutes.js';
 dotenv.config();
 
 const app = express();
-// Gunakan PORT dari .env atau default ke 3000
 const PORT = process.env.PORT || 3000;
 
+// [PENTING] Izinkan CORS agar frontend bisa akses backend
 app.use(cors({
-    origin: ["http://localhost:5173", "https://firststepjourney.vercel.app/"], 
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    origin: true, // Izinkan semua domain (termasuk vercel app)
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
 app.use(express.json());
 
-// Routes
+// --- ROUTES ---
+// Pastikan path ini sesuai dengan request dari frontend
 app.use('/api/events', eventRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/registrations', registrationRoutes);
 
-// Root Route
-app.get('/', (req, res) => {
-  res.send('API BinaKarier Running...');
+// [FIX 1] Tambahkan Route untuk '/api' agar tidak error "Cannot GET /api"
+app.get('/api', (req, res) => {
+    res.status(200).json({ 
+        success: true,
+        message: "Welcome to FSJ API Endpoint" 
+    });
 });
 
-// --- PERBAIKAN LOGIKA SERVER ---
+// Route Root '/'
+app.get('/', (req, res) => {
+  res.send('API FSJ Server is Running...');
+});
 
-// 1. Jika dijalankan LOKAL (bukan di Vercel), jalankan server di Port
+// Jalankan server jika local
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
   });
 }
 
-// 2. Export app untuk Vercel (Gunakan export default, BUKAN module.exports)
 export default app;

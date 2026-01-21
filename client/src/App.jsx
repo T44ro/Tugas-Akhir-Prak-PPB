@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import Login from './Login'; 
 import AddEventModal from './AddEventModal'; 
+import { BASE_URL } from './config/api';
 
 // --- 1. KOMPONEN UI DASAR ---
 
@@ -248,7 +249,7 @@ export default function App() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/events`);
+      const response = await fetch(`${BASE_URL}/events`);
       if (!response.ok) throw new Error('Gagal mengambil data');
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) setEvents(result.data); 
