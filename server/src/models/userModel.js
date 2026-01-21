@@ -2,24 +2,31 @@ import { supabase } from '../config/supabaseClient.js';
 
 export const UserModel = {
   async getByEmail(email) {
+    // PENTING: Gunakan select('*') agar kolom 'role' ikut terambil
     const { data, error } = await supabase
       .from('users')
-      .select('*')
+      .select('*') 
       .eq('email', email)
       .single();
 
-    // Jangan throw error jika data null (user tidak ketemu), return null saja
-    if (error && error.code !== 'PGRST116') throw error; 
+    if (error) return null;
     return data;
   },
 
   async create(userData) {
+    // Pastikan saat register, role default diset (biasanya diatur default di Supabase, atau di sini)
     const { data, error } = await supabase
       .from('users')
-      .insert([userData])
-      .select();
+      .insert([{
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: 'user' // Default role untuk user baru
+      }])
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return data;
-  }
+  },
 };

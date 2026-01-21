@@ -1,33 +1,69 @@
-import React from 'react';
-import { Search, Calendar, Clock, MapPin } from 'lucide-react';
-// Pastikan path import komponen UI Anda benar
+import React, { useState, useEffect } from 'react';
+import { Search, Plus } from 'lucide-react'; // Import icon Plus
 import Button from '../components/ui/Button'; 
-import Badge from '../components/ui/Badge';
+import EventCard from '../components/fragments/EventCard';
+import AddEventModal from '../AddEventModal'; // Pastikan path ini benar
 
 const Events = () => {
-  // Data Dummy Event
-  const events = [
-    {
-        id: 1,
-        title: 'Webinar Personal Branding',
-        category: 'Webinar',
-        date: '12 Okt',
-        price: 'Gratis',
-        image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        id: 2,
-        title: 'Bootcamp Fullstack React',
-        category: 'Bootcamp',
-        date: '20 Okt',
-        price: 'Beasiswa',
-        image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800'
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+  // 1. Ambil User dari LocalStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  
+  // 2. Cek apakah Admin (berdasarkan role dari backend atau email khusus)
+  const isAdmin = user?.role === 'admin' || user?.email === 'admin@test.com';
+
+  // 3. Fetch Data dari API
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/events`);
+      const data = await res.json();
+      if (data.success) {
+        setEvents(data.data);
+      }
+    } catch (error) {
+      console.error("Gagal load events:", error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  // 4. Handle Delete
+  const handleDelete = async (id) => {
+    if(!confirm("Yakin hapus event ini?")) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/events/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if(data.success) {
+        alert("Event dihapus");
+        fetchEvents(); // Refresh list
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="pb-24 pt-6 px-6 min-h-screen bg-gray-50">
-      <h2 className="text-2xl font-bold text-blue-900 mb-6">Jelajahi Event</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-blue-900">Jelajahi Event</h2>
+        
+        {/* LOGIKA: Tombol hanya muncul jika isAdmin = true */}
+        {isAdmin && (
+          <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
+            <Plus size={18} /> Tambah Event
+          </Button>
+        )}
+      </div>
       
       {/* Search Bar */}
       <div className="relative mb-6">
@@ -39,27 +75,34 @@ const Events = () => {
         <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
       </div>
 
-      <div className="space-y-4">
-        {events.map(event => (
-            <div key={event.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-              <div className="h-40 relative">
-                <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
-                <div className="absolute top-3 left-3">
-                   <Badge type={event.category}>{event.category}</Badge>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-gray-900 text-lg mb-2">{event.title}</h3>
-                <div className="flex justify-between items-center mt-4">
-                    <span className="text-sm text-gray-500">{event.date}</span>
-                    <Button variant="primary">Detail</Button>
-                </div>
-              </div>
-            </div>
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-center py-10">Memuat event...</p>
+      ) : (
+        <div className="space-y-4">
+          {events.map(event => (
+            <EventCard 
+              key={event.id} 
+              event={event}
+              isAdmin={isAdmin}    // Oper status admin ke Card
+              onDelete={handleDelete} // Oper fungsi hapus ke Card
+              // Placeholder register
+              onRegister={() => console.log("Daftar")} 
+              isRegistered={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modal hanya dirender jika Admin */}
+      {isAdmin && isModalOpen && (
+        <AddEventModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onSuccess={() => { setIsModalOpen(false); fetchEvents(); }}
+        />
+      )}
     </div>
   );
 };
 
-export default Events; // <--- INI PENTING
+export default Events;
