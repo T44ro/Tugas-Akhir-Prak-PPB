@@ -352,9 +352,9 @@ export default function App() {
       )}
 
       {/* Header dengan efek backdrop blur */}
-      <div className="hidden md:flex bg-white backdrop-blur-sm px-8 py-1 justify-between items-center shadow-sm sticky top-0 z-50">
+      <div className="hidden md:flex bg-white backdrop-blur-sm px-8 py-3 justify-between items-center shadow-sm sticky top-0 z-50">
         <div className="font-bold text-yellow-500 text-xl flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
-             <img src="/logo.png" alt="FirstStep Journey" className="h-20 w-auto object-contain" />
+             <img src="/logo.png" alt="FirstStep Journey" className="h-12 w-auto object-contain" />
              <span>FirstStep Journey</span>
         </div>
         <div className="flex gap-6">
@@ -368,9 +368,9 @@ export default function App() {
         </div>
       </div>
       
-      <div className="md:hidden bg-white backdrop-blur-sm px-6 py-1 flex justify-between items-center shadow-sm sticky top-0 z-40">
+      <div className="md:hidden bg-white backdrop-blur-sm px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-40">
         <div className="font-bold text-yellow-500 text-lg flex items-center gap-2">
-            <img src="/logo.png" alt="Logo" className="h-17 w-auto" />
+            <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
             <span>FirstStep Journey</span>
         </div>
         <button onClick={handleLogout} className="text-red-500"><LogOut size={20}/></button>

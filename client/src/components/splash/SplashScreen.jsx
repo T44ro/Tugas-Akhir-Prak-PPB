@@ -60,12 +60,12 @@ export default function SplashScreen({ onComplete }) {
         <div className={`mb-6 p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl transition-all duration-1000 ${
             fadeIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
         }`}>
-          <div className="bg-white p-3 rounded-xl shadow-lg">
+          <div className="bg-transparent p-1 rounded-xl">
              {/* [2] GANTI BAGIAN INI DENGAN IMAGE */}
              <img 
                src="/logo.png" 
                alt="FirstStep Journey Logo" 
-               className="w-20 h-auto object-contain" 
+               className="w-20 h-20 object-contain" 
              />
           </div>
         </div>
