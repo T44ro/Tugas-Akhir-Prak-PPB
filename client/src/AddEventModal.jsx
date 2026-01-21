@@ -18,7 +18,7 @@ const AddEventModal = ({ isOpen, onClose, onEventAdded, eventToEdit = null }) =>
     link_registration: ''
   });
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://tugas-akhir-prak-ppb-lknt.vercel.app/';
 
   // [LOGIKA EDIT]: Jika ada eventToEdit, isi form dengan data tersebut
   useEffect(() => {

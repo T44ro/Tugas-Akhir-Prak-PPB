@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Di project nyata, ini adalah URL backend Anda.
 // Karena kita belum punya backend NGO, kita bisa kosongkan atau pakai dummy.
-const BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = 'https://tugas-akhir-prak-ppb-lknt.vercel.app/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

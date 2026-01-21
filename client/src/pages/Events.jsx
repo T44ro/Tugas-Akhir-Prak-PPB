@@ -9,7 +9,7 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://tugas-akhir-prak-ppb-lknt.vercel.app/';
 
   // --- LOGIKA PENENTUAN ADMIN (SANGAT KETAT) ---
   const userString = localStorage.getItem('user');

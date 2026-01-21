@@ -7,7 +7,7 @@ export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://tugas-akhir-prak-ppb-lknt.vercel.app/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

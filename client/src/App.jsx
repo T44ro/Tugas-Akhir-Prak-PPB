@@ -224,7 +224,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://tugas-akhir-prak-ppb-lknt.vercel.app/';
   const userRole = (user?.role || '').toLowerCase().trim();
   const isAdmin = userRole === 'admin' || (user?.email === 'admin@test.com');
 

@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: ["http://localhost:5173", "https://tugas-akhir-prak-ppb-3bzz.vercel.app"], 
+    origin: ["http://localhost:5173", "https://firststepjourney.vercel.app/"], 
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
