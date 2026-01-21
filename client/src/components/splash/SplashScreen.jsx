@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Award } from 'lucide-react';
+// [1] Hapus import Award karena kita ganti dengan gambar
+// import { Award } from 'lucide-react'; 
 
 export default function SplashScreen({ onComplete }) {
   const [progress, setProgress] = useState(0);
@@ -60,7 +61,12 @@ export default function SplashScreen({ onComplete }) {
             fadeIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
         }`}>
           <div className="bg-yellow-400 p-3 rounded-xl shadow-lg">
-             <Award className="w-12 h-12 text-blue-900" />
+             {/* [2] GANTI BAGIAN INI DENGAN IMAGE */}
+             <img 
+               src="/logo.png" 
+               alt="FirstStep Journey Logo" 
+               className="w-12 h-12 object-contain" 
+             />
           </div>
         </div>
 

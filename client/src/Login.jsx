@@ -49,7 +49,7 @@ export default function Login({ onLogin }) {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-blue-900">{isLoginView ? 'Selamat Datang' : 'Buat Akun'}</h1>
-          <p className="text-gray-500 text-sm">Aplikasi PWA coba</p>
+          <p className="text-blue-900 text-sm">Steppers!!</p>
         </div>
 
         {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm text-center">{error}</div>}
